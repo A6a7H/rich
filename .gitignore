@@ -130,3 +130,5 @@ dmypy.json
 
 # Data
 data/data_calibsample/
+MCRICHdata/*
+.vscode/settings.json
