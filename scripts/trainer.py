@@ -7,6 +7,7 @@ from typing import Any, List
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from IPython.display import clear_output
 
 
 class BaseTrainer(ABC):
@@ -38,6 +39,8 @@ class RichNodeTrainer(BaseTrainer):
         validation_loader: DataLoader,
         generator_optimizer: torch.optim,
         discriminator_optimizer: torch.optim,
+        generator_scheduler: torch.optim.lr_scheduler,
+        discriminator_scheduler: torch.optim.lr_scheduler,
         generator_loss: Callable = None,
         critic_loss: Callable = None,
         z_dimensions: int = 32,
@@ -47,7 +50,7 @@ class RichNodeTrainer(BaseTrainer):
         generator_iteration: int = 1,
         weights_exist: bool = True,
         device: str = "cuda",
-        logger: Optional = None
+        logger: Any = None
     ):
         super(RichNodeTrainer, self).__init__()
         self.generator_model = generator_model
@@ -56,6 +59,8 @@ class RichNodeTrainer(BaseTrainer):
         self.validation_loader = validation_loader
         self.generator_optimizer = generator_optimizer
         self.discriminator_optimizer = discriminator_optimizer
+        self.generator_scheduler = generator_scheduler
+        self.discriminator_scheduler = discriminator_scheduler
         self.generator_loss = generator_loss
         self.critic_loss = critic_loss
         self.z_dimensions = z_dimensions
@@ -76,7 +81,7 @@ class RichNodeTrainer(BaseTrainer):
                     ]
                 else:
                     x, dlls = [i.to(self.device) for i in next(self.train_loader)]
-                    weight = torch.ones((x.shape[0]))
+                    weight = torch.ones((x.shape[0]), device=self.device)
 
                 self.discriminator_optimizer.zero_grad()
 
@@ -111,7 +116,7 @@ class RichNodeTrainer(BaseTrainer):
                 ]
             else:
                 x, dlls = [i.to(self.device) for i in next(self.train_loader)]
-                weight = torch.ones((x.shape[0]))
+                weight = torch.ones((x.shape[0]), device=self.device)
 
             self.generator_model.train()
             self.discriminator_model.eval()
@@ -132,6 +137,13 @@ class RichNodeTrainer(BaseTrainer):
 
             generator_loss.backward()
             self.generator_optimizer.step()
+
+            self.logger.log_metrics({'Generator loss': generator_loss.item(),
+                                    'Critic loss': critic_loss.item()},
+                                    step=iteration)
+
+            self.generator_scheduler.step()
+            self.discriminator_scheduler.step()
             
             if epoch % self.display_step == 0:
                 with torch.no_grad():
@@ -149,8 +161,10 @@ class RichNodeTrainer(BaseTrainer):
                         )
                     generated = self.generator_model(noized_x)
                     self.draw(dlls, generated)
+        self.logger.end()
 
     def draw(self, dlls, generated, dll_name: List[str] = ["RichDLLe", "RichDLLk", "RichDLLmu", "RichDLLp", "RichDLLbt"]):
+        clear_output(False)
         fig, axs = plt.subplots(3, 2, figsize=(15, 15))
         for INDEX, ax in zip((0, 1, 2, 3, 4), axs.flatten()):
             _, bins, _ = ax.hist(dlls[:, INDEX].cpu(),
