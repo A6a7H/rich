@@ -1,10 +1,12 @@
 from typing import Callable
-from utils.modelutils import get_noise, get_gradient, gradient_penalty
+from rich.utils.modelutils import get_noise, get_gradient, gradient_penalty
 from torch.utils.data import DataLoader
 from abc import ABC
 from tqdm import tqdm
+from typing import Any, List
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class BaseTrainer(ABC):
@@ -23,8 +25,8 @@ class BaseTrainer(ABC):
     # def evaluate(self):
     #     raise NotImplementedError
 
-    # def draw(self):
-    #     raise NotImplementedError
+    def draw(self):
+        raise NotImplementedError
 
 
 class RichNodeTrainer(BaseTrainer):
@@ -45,6 +47,7 @@ class RichNodeTrainer(BaseTrainer):
         generator_iteration: int = 1,
         weights_exist: bool = True,
         device: str = "cuda",
+        logger: Optional = None
     ):
         super(RichNodeTrainer, self).__init__()
         self.generator_model = generator_model
@@ -57,14 +60,16 @@ class RichNodeTrainer(BaseTrainer):
         self.critic_loss = critic_loss
         self.z_dimensions = z_dimensions
         self.epochs = epochs
+        self.display_step = display_step
         self.critic_iteration = critic_iteration
         self.generator_iteration = generator_iteration
         self.weights_exist = weights_exist
         self.device = device
+        self.logger = logger
 
     def train(self):
-        for epoch in tqdm(self.epochs):
-            for critic_iteration in range(critic_iteration):
+        for epoch in tqdm(range(self.epochs)):
+            for critic_iteration in range(self.critic_iteration):
                 if self.weights_exist:
                     x, weight, dlls = [
                         i.to(self.device) for i in next(self.train_loader)
@@ -94,9 +99,9 @@ class RichNodeTrainer(BaseTrainer):
                 epsilon = epsilon.to(self.device)
 
                 gradient = get_gradient(self.critic_loss, real_full_0, generated_1, generated_2, epsilon)
-                gradient_penalty = gradient_penalty(gradient)
+                gp = gradient_penalty(gradient)
                 
-                critic_loss = 0.7 * gradient_penalty - generator_loss
+                critic_loss = 0.7 * gp - generator_loss
                 critic_loss.backward()
                 self.discriminator_optimizer.step()
 
@@ -127,4 +132,38 @@ class RichNodeTrainer(BaseTrainer):
 
             generator_loss.backward()
             self.generator_optimizer.step()
+            
+            if epoch % self.display_step == 0:
+                with torch.no_grad():
+                    if self.weights_exist:
+                        x, weight, dlls = [
+                            i.to(self.device) for i in next(self.train_loader)
+                        ]
+                    else:
+                        x, dlls = [i.to(self.device) for i in next(self.train_loader)]
+                        weight = torch.ones((x.shape[0]))
+                    real_full_0 = torch.cat([dlls, x], dim=1)
+                    noized_x = torch.cat(
+                            [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
+                            dim=1,
+                        )
+                    generated = self.generator_model(noized_x)
+                    self.draw(dlls, generated)
 
+    def draw(self, dlls, generated, dll_name: List[str] = ["RichDLLe", "RichDLLk", "RichDLLmu", "RichDLLp", "RichDLLbt"]):
+        fig, axs = plt.subplots(3, 2, figsize=(15, 15))
+        for INDEX, ax in zip((0, 1, 2, 3, 4), axs.flatten()):
+            _, bins, _ = ax.hist(dlls[:, INDEX].cpu(),
+                                bins=100,
+                                label="data")
+            ax.hist(generated[:, INDEX].cpu(),
+                    bins=bins,
+                    label="generated",
+                    alpha=0.5)
+            ax.legend()
+            ax.set_title(dll_name[INDEX])
+        self.logger.log_figure()
+        plt.show()
+        
+
+        
