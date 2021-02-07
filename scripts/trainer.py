@@ -95,14 +95,19 @@ class RichNodeTrainer(BaseTrainer):
                 self.generator_model.eval()
                 self.discriminator_model.train()
 
-                noized_x = torch.cat(
+                noized_x_1 = torch.cat(
+                    [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
+                    dim=1,
+                )
+
+                noized_x_2 = torch.cat(
                     [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
                     dim=1,
                 )
 
                 real_full_0 = torch.cat([dlls, x], dim=1)
-                generated_1 = torch.cat([self.generator_model(noized_x), x], dim=1)
-                generated_2 = torch.cat([self.generator_model(noized_x), x], dim=1)
+                generated_1 = torch.cat([self.generator_model(noized_x_1), x], dim=1)
+                generated_2 = torch.cat([self.generator_model(noized_x_2), x], dim=1)
 
                 generator_loss = torch.mean(
                     self.critic_loss(real_full_0, generated_2) * weight
@@ -132,13 +137,19 @@ class RichNodeTrainer(BaseTrainer):
             self.discriminator_model.eval()
             self.generator_optimizer.zero_grad()
 
-            noized_x = torch.cat(
+            noized_x_1 = torch.cat(
                 [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
                 dim=1,
             )
+
+            noized_x_2 = torch.cat(
+                [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
+                dim=1,
+            )
+
             real_full_0 = torch.cat([dlls, x], dim=1)
-            generated_1 = torch.cat([self.generator_model(noized_x), x], dim=1)
-            generated_2 = torch.cat([self.generator_model(noized_x), x], dim=1)
+            generated_1 = torch.cat([self.generator_model(noized_x_1), x], dim=1)
+            generated_2 = torch.cat([self.generator_model(noized_x_2), x], dim=1)
 
             generator_loss = torch.mean(
                 self.generator_loss(real_full_0, generated_2) * weight
