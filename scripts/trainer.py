@@ -84,6 +84,8 @@ class RichNodeTrainer(BaseTrainer):
                     weight = torch.ones((x.shape[0]), device=self.device)
 
                 self.discriminator_optimizer.zero_grad()
+                self.generator_model.eval()
+                self.discriminator_model.train()
 
                 noized_x = torch.cat(
                     [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
@@ -140,7 +142,7 @@ class RichNodeTrainer(BaseTrainer):
 
             self.logger.log_metrics({'Generator loss': generator_loss.item(),
                                     'Critic loss': critic_loss.item()},
-                                    step=iteration)
+                                    step=epoch)
 
             self.generator_scheduler.step()
             self.discriminator_scheduler.step()
