@@ -166,10 +166,10 @@ class RichNodeTrainer(BaseTrainer):
                 with torch.no_grad():
                     if self.weights_exist:
                         x, weight, dlls = [
-                            i.to(self.device) for i in next(self.train_loader)
+                            i.to(self.device) for i in next(self.validation_loader)
                         ]
                     else:
-                        x, dlls = [i.to(self.device) for i in next(self.train_loader)]
+                        x, dlls = [i.to(self.device) for i in next(self.validation_loader)]
                         weight = torch.ones((x.shape[0]))
                     real_full_0 = torch.cat([dlls, x], dim=1)
                     noized_x = torch.cat(
