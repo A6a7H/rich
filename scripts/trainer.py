@@ -76,6 +76,7 @@ class RichNodeWGANTrainer(BaseTrainer):
             for x, dlls in self.train_loader:
                 x = x.to(self.device)
                 dlls = dlls.to(self.device)
+                dlls = dlls.unsqueeze(dim=1)
 
                 for _ in range(self.critic_iteration):
                     self.discriminator_optimizer.zero_grad()
@@ -93,8 +94,8 @@ class RichNodeWGANTrainer(BaseTrainer):
                     crit_real_pred = self.discriminator_model(real_full)
                     
                     generator_loss = torch.mean(crit_fake_pred - crit_real_pred)
-                    epsilon = torch.rand(real_full_0.shape[0], 1)
-                    epsilon = epsilon.expand(real_full_0.size())
+                    epsilon = torch.rand(real_full.shape[0], 1)
+                    epsilon = epsilon.expand(real_full.size())
                     epsilon = epsilon.to(self.device)
 
                     gradient = get_gradient(
@@ -117,36 +118,26 @@ class RichNodeWGANTrainer(BaseTrainer):
 
             real_full = torch.cat([dlls, x], dim=1)
             generated = torch.cat([self.generator_model(noized_x), x], dim=1)
-            crit_fake_pred = self.discriminator_model(fake)
+            crit_fake_pred = self.discriminator_model(generated)
 
             generator_loss = -torch.mean(crit_fake_pred)
 
             generator_loss.backward()
             self.generator_optimizer.step()
 
-            self.logger.log_metrics(
-                {
-                    "Generator loss": generator_loss.item(),
-                    "Critic loss": critic_loss.item(),
-                    "Gradient Norm": torch.norm(
-                        gradient.view(len(gradient), -1).norm(2, dim=1)
-                    ),
-                },
-                step=epoch,
-            )
+            self.logger.log_metric("Generator loss", generator_loss.item() / len(self.train_loader))
+            self.logger.log_metric("Critic loss", critic_loss.item() / len(self.train_loader))
 
             self.generator_scheduler.step()
             self.discriminator_scheduler.step()
 
             if epoch % self.display_step == 0:
                 with torch.no_grad():
-                    if self.weights_exist:
-                        x, weight, dlls = [
-                            i.to(self.device) for i in next(self.validation_loader)
-                        ]
-                    else:
-                        x, dlls = [i.to(self.device) for i in next(self.validation_loader)]
-                        weight = torch.ones((x.shape[0]))
+                    x, dlls = next(iter(self.validation_loader))
+                    x = x.to(self.device)
+                    dlls = dlls.to(self.device)
+                    dlls = dlls.unsqueeze(dim=1)
+
                     real_full_0 = torch.cat([dlls, x], dim=1)
                     noized_x = torch.cat(
                         [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
@@ -154,7 +145,6 @@ class RichNodeWGANTrainer(BaseTrainer):
                     )
                     generated = self.generator_model(noized_x)
                     self.draw(dlls, generated)
-        self.logger.end()
 
     def draw(
         self,
@@ -162,10 +152,10 @@ class RichNodeWGANTrainer(BaseTrainer):
         generated,
         dll_name: List[str] = [
             "RichDLLe",
-            "RichDLLk",
-            "RichDLLmu",
-            "RichDLLp",
-            "RichDLLbt",
+            # "RichDLLk",
+            # "RichDLLmu",
+            # "RichDLLp",
+            # "RichDLLbt",
         ],
     ):
         clear_output(False)
@@ -175,8 +165,8 @@ class RichNodeWGANTrainer(BaseTrainer):
             ax.hist(generated[:, INDEX].cpu(), bins=bins, label="generated", alpha=0.5)
             ax.legend()
             ax.set_title(dll_name[INDEX])
-        self.logger.log_figure()
-        plt.show()
+        self.logger.log_image('diagram', fig)
+
 
 
 
