@@ -51,7 +51,7 @@ class RichNodeWGANTrainer(BaseTrainer):
         device: str = "cuda",
         logger: Any = None,
     ):
-        super(RichNodeTrainer, self).__init__()
+        super(RichNodeWGANTrainer, self).__init__()
         self.generator_model = generator_model
         self.discriminator_model = discriminator_model
         self.train_loader = train_loader
@@ -73,49 +73,38 @@ class RichNodeWGANTrainer(BaseTrainer):
 
     def train(self):
         for epoch in tqdm(range(self.epochs)):
-            for critic_iteration in range(self.critic_iteration):
-                if self.weights_exist:
-                    x, weight, dlls = [
-                        i.to(self.device) for i in next(self.train_loader)
-                    ]
-                else:
-                    x, dlls = [i.to(self.device) for i in next(self.train_loader)]
-                    weight = torch.ones((x.shape[0]), device=self.device)
+            for x, dlls in self.train_loader:
+                x = x.to(self.device)
+                dlls = dlls.to(self.device)
 
-                self.discriminator_optimizer.zero_grad()
-                self.generator_model.eval()
-                self.discriminator_model.train()
+                for _ in range(self.critic_iteration):
+                    self.discriminator_optimizer.zero_grad()
+                    self.generator_model.eval()
+                    self.discriminator_model.train()
 
-                noized_x = torch.cat(
-                    [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
-                    dim=1,
-                )
-                real_full = torch.cat([dlls, x], dim=1)
-                generated = torch.cat([self.generator_model(noized_x), x], dim=1)
+                    noized_x = torch.cat(
+                        [x, get_noise(x.shape[0], self.z_dimensions).to(self.device)],
+                        dim=1,
+                    )
+                    real_full = torch.cat([dlls, x], dim=1)
+                    generated = torch.cat([self.generator_model(noized_x), x], dim=1)
 
-                crit_fake_pred = self.discriminator_model(generated)
-                crit_real_pred = self.discriminator_model(real_full)
-                
-                generator_loss = torch.mean(crit_fake_pred - crit_real_pred)
-                # epsilon = torch.rand(len(real), 1, 1, 1, device=device, requires_grad=True)
-                epsilon = torch.rand(real_full_0.shape[0], 1)
-                epsilon = epsilon.expand(real_full_0.size())
-                epsilon = epsilon.to(self.device)
+                    crit_fake_pred = self.discriminator_model(generated)
+                    crit_real_pred = self.discriminator_model(real_full)
+                    
+                    generator_loss = torch.mean(crit_fake_pred - crit_real_pred)
+                    epsilon = torch.rand(real_full_0.shape[0], 1)
+                    epsilon = epsilon.expand(real_full_0.size())
+                    epsilon = epsilon.to(self.device)
 
-                gradient = get_gradient(
-                    self.discriminator_model, real_full, generated, None, epsilon
-                )
-                gp = gradient_penalty(gradient)
+                    gradient = get_gradient(
+                        self.discriminator_model, real_full, generated, None, epsilon
+                    )
+                    gp = gradient_penalty(gradient)
 
-                critic_loss = 10 * gp + generator_loss
-                critic_loss.backward(retain_graph=True)
-                self.discriminator_optimizer.step()
-
-            if self.weights_exist:
-                x, weight, dlls = [i.to(self.device) for i in next(self.train_loader)]
-            else:
-                x, dlls = [i.to(self.device) for i in next(self.train_loader)]
-                weight = torch.ones((x.shape[0]), device=self.device)
+                    critic_loss = 10 * gp + generator_loss
+                    critic_loss.backward(retain_graph=True)
+                    self.discriminator_optimizer.step()
 
             self.generator_model.train()
             self.discriminator_model.eval()
@@ -127,7 +116,7 @@ class RichNodeWGANTrainer(BaseTrainer):
             )
 
             real_full = torch.cat([dlls, x], dim=1)
-            generated = torch.cat([self.generator_model(noized_x_1), x], dim=1)
+            generated = torch.cat([self.generator_model(noized_x), x], dim=1)
             crit_fake_pred = self.discriminator_model(fake)
 
             generator_loss = -torch.mean(crit_fake_pred)
