@@ -1,0 +1,3 @@
+[submodule "models/node"]
+	path = models/node
+	url = https://github.com/Qwicen/node.git
