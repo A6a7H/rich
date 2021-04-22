@@ -79,6 +79,8 @@ class JSGAN():
             generator_checkpoint = torch.load(generator_checkpoint_path)
             self.generator_model.load_state_dict(generator_checkpoint["generator_model_state_dict"])
 
+        self.generator_model.to(self.params["device"])
+
     def create_critic(self):
         if self.params["critic_architecture"].lower() == "node":
             logger.info("Creating NODE model")
@@ -100,17 +102,19 @@ class JSGAN():
             critic_checkpoint = torch.load(critic_checkpoint_path)
             self.critic_model.load_state_dict(critic_checkpoint["critic_model_state_dict"])
 
+        self.critic_model.to(self.params["device"])
+
     def train_generator(self, batch):
         if self.params['data']['drop_weights']:
             x, dlls = batch
         else:
             x, dlls, weight = batch
 
-        x = x.to(device).type(torch.float)
-        dlls = dlls.to(device).type(torch.float)
+        x = x.to(self.params["device"]).type(torch.float)
+        dlls = dlls.to(self.params["device"]).type(torch.float)
 
         noized_x = torch.cat(
-            [x, get_noise(x.shape[0], self.params['noise_dim']).to(device)],
+            [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
             dim=1,
         )
 
@@ -131,11 +135,11 @@ class JSGAN():
             x, dlls = batch
         else:
             x, dlls, weight = batch
-        x = x.to(device).type(torch.float)
-        dlls = dlls.to(device).type(torch.float)
+        x = x.to(self.params["device"]).type(torch.float)
+        dlls = dlls.to(self.params["device"]).type(torch.float)
 
         noized_x = torch.cat(
-            [x, get_noise(x.shape[0], self.params['noise_dim']).to(device)],
+            [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
             dim=1,
         )
 
@@ -164,10 +168,10 @@ class JSGAN():
         else:
             x, dlls, weight = batch
             
-        x = x.to(device).type(torch.float)
-        dlls = dlls.to(device).type(torch.float)
+        x = x.to(self.params["device"]).type(torch.float)
+        dlls = dlls.to(self.params["device"]).type(torch.float)
 
-        noize = get_noise(x.shape[0], self.params['noise_dim']).to(device)
+        noize = get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])
         noized_x = torch.cat(
             [x, noize],
             dim=1,
@@ -179,7 +183,8 @@ class JSGAN():
     def get_histograms(self, generated, real):
         features_names = self.params['features_names']
         num_of_subplots = len(features_names)
-
+        
+        plt.clf()
         fig, axes = plt.subplots(num_of_subplots, 1, figsize=(10, 16))
         plt.suptitle("Histograms")
 
@@ -192,6 +197,8 @@ class JSGAN():
                 real[:, feature_index],
                 bins=100,
                 label="real",
+                common_norm=True,
+                color="b",
                 hist_kws={"alpha": 1.0},
                 ax=ax,
                 norm_hist=True,
@@ -202,6 +209,8 @@ class JSGAN():
                 generated[:, feature_index].cpu(),
                 bins=100,
                 label="generated",
+                common_norm=True,
+                color="r",
                 hist_kws={"alpha": 0.5},
                 ax=ax,
                 norm_hist=True,
@@ -211,4 +220,4 @@ class JSGAN():
             if feature_index == 0:
                 ax.legend()
 
-            return fig
+        return fig

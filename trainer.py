@@ -45,8 +45,8 @@ class Trainer():
 
                 self.generator_optimizer.zero_grad()
 
-                generator_losses = self.gan_model.train_critic(batch)
-                generator_total_loss = critic_losses['G/loss']
+                generator_losses = self.gan_model.train_generator(batch)
+                generator_total_loss = generator_losses['G/loss']
                 generator_total_loss.backward(retain_graph=True)
                 self.generator_optimizer.step()
 
@@ -58,15 +58,17 @@ class Trainer():
 
                 if iteration % self.display_step == 0:
                     name = f"epoch_{epoch}_iter_{iteration}.pt"
+                    if not os.path.exists(self.save_path):
+                        os.mkdir(self.save_path)
                     save_path_with_iter = os.path.join(self.save_path, name)
                     self.gan_model.save_models(save_path_with_iter, epoch)
                     with torch.no_grad():
                         generated_list = []
                         dlls_list = []
-                        for batch in self.validation_loader:
+                        for batch in validation_loader:
                             generated = self.gan_model.generate(batch)
                             generated_list.append(generated)
                             dlls_list.append(batch[1])
-                        fig = self.gan_model.get_histograms(torch.cat(dlls_list, dim=0), 
-                                                            torch.cat(generated_list, dim=0))
+                        fig = self.gan_model.get_histograms(torch.cat(generated_list, dim=0).cpu(), 
+                                                            torch.cat(dlls_list, dim=0).cpu())
                         self.neptune_logger.log_image("Histograms", fig)

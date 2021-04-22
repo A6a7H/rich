@@ -1,11 +1,11 @@
-batch_size: 16384
+batch_size: 1024
 num_workers: 2
 n_epochs: 1000
 max_epoch: 1000
 starting_epoch: 0
-display_step: 1
-critic_step: 15
-device: cpu
+display_step: 100
+critic_step: 10
+device: cuda
 
 features_names:
   - RichDLLe
@@ -15,7 +15,7 @@ features_names:
   - RichDLLbt
 
 checkpoint_path:
-save_path: ./checkpoints/
+save_path: /content/drive/MyDrive/rich/
 gan_type: js
 
 neptune:
