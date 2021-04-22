@@ -1,0 +1,17 @@
+critic_architecture: NODE
+critic_model_type: classification
+noise_dim: 64
+
+critic:
+  weight_decay: 0.
+  optimizer: adam
+  learning_rate: 0.0004
+  beta1: 0.5
+  beta2: 0.999
+
+  params:
+    input_size: 8
+    layer_dim: 128 
+    num_layers: 2
+    tree_dim: 2
+    depth: 6

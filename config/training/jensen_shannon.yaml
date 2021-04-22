@@ -1,0 +1,26 @@
+batch_size: 16384
+num_workers: 2
+n_epochs: 1000
+max_epoch: 1000
+starting_epoch: 0
+display_step: 1
+critic_step: 15
+device: cpu
+
+features_names:
+  - RichDLLe
+  - RichDLLk
+  - RichDLLmu
+  - RichDLLp
+  - RichDLLbt
+
+checkpoint_path:
+save_path: ./checkpoints/
+gan_type: js
+
+neptune:
+  project_name: danji/rich
+  experiment_name: rich
+  tags:
+    - rich
+    - jsgan
