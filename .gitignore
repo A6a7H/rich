@@ -132,3 +132,6 @@ dmypy.json
 data/data_calibsample/
 MCRICHdata/*
 .vscode/settings.json
+
+
+outputs/*

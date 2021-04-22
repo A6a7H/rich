@@ -1,14 +1,17 @@
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import RobustScaler, QuantileTransformer, StandardScaler
+import os
+import torch
 import numpy as np
 import pandas as pd
-import os
+
 from time import time
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import RobustScaler, QuantileTransformer, StandardScaler
+from torch.utils.data import TensorDataset
 
 
 def scale_pandas(dataframe, scaler):
-    return pd.DataFrame(scaler.transform(dataframe.values), columns=dataframe.columns)
-
+    return pd.DataFrame(scaler.transform(dataframe.values), 
+                        columns=dataframe.columns)
 
 class RichDatasetLoader:
     def __init__(
@@ -43,6 +46,19 @@ class RichDatasetLoader:
             for name in os.listdir(self.data_dir)
             if particle in name
         ]
+
+    def split(self, data):
+        data_train, data_val = train_test_split(
+            data, test_size=self.test_size, random_state=42
+        )
+        data_val, data_test = train_test_split(
+            data_val, test_size=self.test_size, random_state=1812
+        )
+        return (
+            data_train.reset_index(drop=True),
+            data_val.reset_index(drop=True),
+            data_test.reset_index(drop=True),
+        )
 
     def get_all_particles_dataset(self, dtype=None, log=False, n_quantiles=100000):
         data_train_all = []
@@ -150,15 +166,49 @@ class RichDatasetLoader:
             ignore_index=True,
         )
 
-    def split(self, data):
-        data_train, data_val = train_test_split(
-            data, test_size=self.test_size, random_state=42
+
+def get_RICH(particle, drop_weights, path):
+    flow_shape = (5,)
+
+    train_data, test_data, scaler = RichDatasetLoader(path).get_merged_typed_dataset(
+        particle, dtype=np.float32, log=True
+    )
+
+    condition_columns = ["Brunel_P", "Brunel_ETA", "nTracks_Brunel"]
+    signal_columns = ['is_Kaon', 'is_Muon', 'is_Pion', 'is_Proton']
+    dll_columns = ["RichDLLe", "RichDLLk", "RichDLLmu", "RichDLLp", "RichDLLbt"]
+    weight_column = "probe_sWeight"
+
+    if drop_weights:
+        train_dataset, test_dataset = pd.read_csv(f"{path}/MCRICH_train.csv"), pd.read_csv(f"{path}/MCRICH_test.csv")
+
+        drop_signals=['Electron', 'Ghost']
+
+        train_dataset = train_dataset.loc[~train_dataset.Signal.isin(drop_signals)]
+        train_dataset = pd.get_dummies(train_dataset.Signal, prefix='is').join(train_dataset)
+        train_dataset.drop('Signal', axis=1, inplace=True)
+
+        test_dataset = test_dataset.loc[~test_dataset.Signal.isin(drop_signals)]
+        test_dataset = pd.get_dummies(test_dataset.Signal, prefix='is').join(test_dataset)
+        test_dataset.drop('Signal', axis=1, inplace=True)
+
+        scaler = StandardScaler().fit(train_dataset.drop(signal_columns, axis=1).values)
+
+        onehot_train = train_dataset[signal_columns].reset_index(drop=True)
+        train_dataset = pd.concat([onehot_train, scale_pandas(train_dataset.drop(signal_columns, axis=1), scaler)], axis=1)
+
+        onehot_val = test_dataset[signal_columns].reset_index(drop=True)
+        test_dataset = pd.concat([onehot_val, scale_pandas(test_dataset.drop(signal_columns, axis=1), scaler)], axis=1)
+    else:
+        train_dataset = TensorDataset(
+            torch.from_numpy(train_data[condition_columns].values),
+            torch.from_numpy(train_data[dll_columns].values),
+            torch.from_numpy(train_data[weight_column].values),
         )
-        data_val, data_test = train_test_split(
-            data_val, test_size=self.test_size, random_state=1812
+        test_dataset = TensorDataset(
+            torch.from_numpy(test_data[condition_columns].values),
+            torch.from_numpy(test_data[dll_columns].values),
+            torch.from_numpy(test_data[weight_column].values),
         )
-        return (
-            data_train.reset_index(drop=True),
-            data_val.reset_index(drop=True),
-            data_test.reset_index(drop=True),
-        )
+
+    return len(condition_columns), flow_shape, train_dataset, test_dataset, scaler

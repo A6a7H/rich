@@ -1,0 +1,16 @@
+features_names:
+  - RichDLLe
+  - RichDLLk
+  - RichDLLmu
+  - RichDLLp
+  - RichDLLbt
+
+save_path: ./drive/MyDrive/rich/
+gan_type: wgan
+
+neptune:
+  project_name: danji/rich
+  experiment_name: rich
+  tags:
+    - rich
+    - wgan

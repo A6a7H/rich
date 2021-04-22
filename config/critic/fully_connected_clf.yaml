@@ -1,0 +1,15 @@
+critic_architecture: FCN
+critic_model_type: classification
+noise_dim: 32
+
+critic:
+  weight_decay: 0.
+  optimizer: adam
+  learning_rate: 0.0001
+  beta1: 0.5
+  beta2: 0.999
+
+  params:
+    in_channel: 3
+    hidden_channel: 32 
+    out_channel: 1
