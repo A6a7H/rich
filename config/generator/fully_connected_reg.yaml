@@ -1,8 +1,8 @@
-critic_architecture: FCN
-critic_model_type: regression
-noise_dim: 32
+generator_architecture: FCN
+generator_model_type: regression
+noise_dim: 64
 
-critic:
+generator:
   weight_decay: 0.
   optimizer: adam
   learning_rate: 0.0004
