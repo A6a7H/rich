@@ -70,7 +70,7 @@ class JSGAN():
         elif self.params["critic_architecture"].lower() == "fcn":
             logger.info("Creating FCN model")
             logger.info(f"params: \n{self.params['generator']}")
-            self.generator_model = create_fcn_model(self.params['generator'], 
+            self.generator_model = create_fcn_model(self.params['generator']['params'], 
                                     model_type=self.params['generator_model_type'])
         else:
             raise NameError(
@@ -88,12 +88,12 @@ class JSGAN():
         if self.params["critic_architecture"].lower() == "node":
             logger.info("Creating NODE model")
             logger.info(f"params: \n{self.params['critic']}")
-            self.critic_model = create_node_model(self.params['critic'], 
+            self.critic_model = create_node_model(self.params['critic']['params'], 
                                     model_type=self.params['critic_model_type'])
         elif self.params["critic_architecture"].lower() == "fcn":
             logger.info("Creating FCN model")
             logger.info(f"params: \n{self.params['critic']}")
-            self.critic_model = create_fcn_model(self.params['critic'], 
+            self.critic_model = create_fcn_model(self.params['critic']['params'], 
                                     model_type=self.params['critic_model_type'])
         else:
             raise NameError(

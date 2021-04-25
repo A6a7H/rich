@@ -13,7 +13,7 @@ class Fully_connected(nn.Module):
     """
 
     def __init__(
-        self, in_channel: int = 1, hidden_channel: int = 64, out_channel: int = 1
+        self, in_channel: int = 1, hidden_channel: int = 64, out_channel: int = 1, **kwargs
     ):
         super(Fully_connected, self).__init__()
         self.in_channel = in_channel
