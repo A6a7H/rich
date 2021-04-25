@@ -69,6 +69,8 @@ class Trainer():
                             generated = self.gan_model.generate(batch)
                             generated_list.append(generated)
                             dlls_list.append(batch[1])
-                        fig = self.gan_model.get_histograms(torch.cat(generated_list, dim=0).cpu(), 
-                                                            torch.cat(dlls_list, dim=0).cpu())
-                        self.neptune_logger.log_image("Histograms", fig)
+                        generated = torch.cat(generated_list, dim=0).cpu()
+                        real = torch.cat(dlls_list, dim=0).cpu()
+                        outputs = self.gan_model.validation_step(generated, real)
+                        self.neptune_logger.log_image("Histograms", outputs['histogram'])
+                        self.neptune_logger.log_metric("rocauc", outputs['rocauc'])

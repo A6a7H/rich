@@ -1,6 +1,5 @@
 batch_size: 1024
 num_workers: 2
-n_epochs: 1000
 max_epoch: 1000
 starting_epoch: 0
 display_step: 100

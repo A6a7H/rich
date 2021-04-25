@@ -1,6 +1,6 @@
 data:
   name: rich
-  data_path: /home/danji/Program/ML/rich/data/data_calibsample/
+  data_path: /content/drive/MyDrive/data/data_calibsample/
   particle: pion
   drop_weights: false
   download: true

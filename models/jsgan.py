@@ -1,12 +1,16 @@
 import torch
 import logging
 import typing as tp
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 
 from torchvision.utils import make_grid
+from sklearn.model_selection import train_test_split
+from catboost import CatBoostClassifier
 
+from .metrics import calculate_roc_auc
 from models import (get_gradient, 
                     get_noise, 
                     gradient_penalty)
@@ -14,7 +18,6 @@ from models import (create_node_model,
                     create_fcn_model)
 
 logger = logging.getLogger(__name__)
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class JSGAN():
     def __init__(self, config: tp.Dict[str, tp.Any]):
@@ -197,7 +200,6 @@ class JSGAN():
                 real[:, feature_index],
                 bins=100,
                 label="real",
-                common_norm=True,
                 color="b",
                 hist_kws={"alpha": 1.0},
                 ax=ax,
@@ -209,7 +211,6 @@ class JSGAN():
                 generated[:, feature_index].cpu(),
                 bins=100,
                 label="generated",
-                common_norm=True,
                 color="r",
                 hist_kws={"alpha": 0.5},
                 ax=ax,
@@ -221,3 +222,37 @@ class JSGAN():
                 ax.legend()
 
         return fig
+
+    def validation_step(self, generated, real, weights=None):
+        figure = self.get_histograms(generated, real)
+        roc_auc_score = self.get_roc_auc_score(generated, real)
+        outputs = {
+            'histogram': figure,
+            'rocauc': roc_auc_score
+        }
+        return outputs
+
+
+    def get_roc_auc_score(self, generated, real):
+        X = np.concatenate((generated, real))
+        y = np.array([0] * generated.shape[0] + [1] * real.shape[0])
+
+        (
+            X_train,
+            X_test,
+            y_train,
+            y_test,
+        ) = train_test_split(
+            X,
+            y,
+            test_size=0.2,
+            random_state=self.params["seed"],
+            stratify=y,
+            shuffle=True,
+        )
+
+        classifier = CatBoostClassifier(iterations=1000, thread_count=10, silent=True)
+        classifier.fit(X_train, y_train)
+        predicted = classifier.predict(X_test)
+        roc_auc = calculate_roc_auc(y_test, predicted)
+        return roc_auc
