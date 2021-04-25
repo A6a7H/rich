@@ -1,15 +1,15 @@
-generator_architecture: FCN
-generator_model_type: regression
+critic_architecture: FCN
+critic_model_type: regression
 noise_dim: 32
 
-generator:
+critic:
   weight_decay: 0.
   optimizer: adam
-  learning_rate: 0.0001
+  learning_rate: 0.0004
   beta1: 0.5
   beta2: 0.999
 
   params:
-    in_channel: 3
+    in_channel: 67
     hidden_channel: 32 
-    out_channel: 1
+    out_channel: 5

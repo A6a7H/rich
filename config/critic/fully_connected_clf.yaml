@@ -5,11 +5,11 @@ noise_dim: 32
 critic:
   weight_decay: 0.
   optimizer: adam
-  learning_rate: 0.0001
+  learning_rate: 0.0004
   beta1: 0.5
   beta2: 0.999
 
   params:
-    in_channel: 3
+    in_channel: 8
     hidden_channel: 32 
     out_channel: 1
