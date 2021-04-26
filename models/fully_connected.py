@@ -39,7 +39,6 @@ class Fully_connected(nn.Module):
         if not final_layer:
             return nn.Sequential(
                 nn.Linear(in_channel, out_channels),
-                nn.BatchNorm1d(out_channels),
                 nn.LeakyReLU(0.02),
             )
         else:
