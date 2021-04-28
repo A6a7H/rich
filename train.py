@@ -59,7 +59,7 @@ def main(config: DictConfig):
     model = JSGAN(config)
 
     save_path = config["save_path"]
-    folder_name = f"{config['gan_type']}_{config['generator_architecture']}_{config['critic_architecture']}"
+    folder_name = f"{config['gan_type']}_{config['generator_architecture']}_{config['critic_architecture']}_{config['experiment_data']}"
     save_path = os.path.join(save_path, folder_name)
 
     logger.info("Creating trainer")

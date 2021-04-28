@@ -10,7 +10,7 @@ generator:
 
   params:
     input_size: 67
-    layer_dim: 128 
-    num_layers: 4
+    layer_dim: 64 
+    num_layers: 8
     tree_dim: 3
     depth: 6
