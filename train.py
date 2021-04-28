@@ -27,7 +27,7 @@ def main(config: DictConfig):
     neptune_logger = project.create_experiment(
         name=config["neptune"]["experiment_name"],
         tags=OmegaConf.to_container(config["neptune"]["tags"]),
-        params=OmegaConf.to_container(config)
+        params=OmegaConf.to_container(config),
     )
 
     logger.info("Getting dataset")
@@ -71,6 +71,10 @@ def main(config: DictConfig):
         device=config["device"],
         save_path=save_path,
         neptune_logger=neptune_logger,
+    )
+    logger.info("Calculating inference time")
+    trainer.calculate_inference_time(
+        (1, config["generator"]["params"]["input_size"]), config["repetitions"]
     )
 
     logger.info("Starting train")

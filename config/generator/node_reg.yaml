@@ -1,6 +1,5 @@
 generator_architecture: NODE
 generator_model_type: regression
-noise_dim: 64
 
 generator:
   weight_decay: 0.

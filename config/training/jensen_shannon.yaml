@@ -4,6 +4,8 @@ max_epoch: 1000
 starting_epoch: 0
 display_step: 100
 critic_step: 10
+repetitions: 300
+noise_dim: 64
 device: cuda
 
 features_names:
