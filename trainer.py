@@ -11,7 +11,8 @@ from torch.utils.data import DataLoader
 
 logger = logging.getLogger(__name__)
 
-class Trainer():
+
+class Trainer:
     def __init__(
         self,
         gan_model,
@@ -21,7 +22,7 @@ class Trainer():
         device: str = "cuda",
         save_path: str = ".",
         neptune_logger: Callable = None,
-    ):  
+    ):
         self.gan_model = gan_model
         self.max_epoch = max_epoch
         self.display_step = display_step
@@ -29,7 +30,34 @@ class Trainer():
         self.device = device
         self.save_path = save_path
         self.neptune_logger = neptune_logger
-        self.generator_optimizer, self.critic_optimizer = gan_model.configure_optimizers()
+        (
+            self.generator_optimizer,
+            self.critic_optimizer,
+        ) = gan_model.configure_optimizers()
+
+    def calculate_inference_time(self, dummy_shape, repetitions):
+        dummy_input = torch.randn(*dummy_shape, dtype=torch.float).to(self.device)
+        # INIT LOGGERS
+        starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(
+            enable_timing=True
+        )
+        timings = np.zeros((repetitions, 1))
+        # GPU-WARM-UP
+        for _ in range(10):
+            _ = self.gan_model.generator_model(dummy_input)
+        with torch.no_grad():
+            for rep in range(repetitions):
+                starter.record()
+                _ = self.gan_model.generator_model(dummy_input)
+                ender.record()
+                # WAIT FOR GPU SYNC
+                torch.cuda.synchronize()
+                curr_time = starter.elapsed_time(ender)
+                timings[rep] = curr_time
+        mean_syn = np.sum(timings) / repetitions
+        std_syn = np.std(timings)
+        self.neptune_logger.log_metric("mean_time", mean_syn)
+        self.neptune_logger.log_metric("std_time", std_syn)
 
     def fit(self, train_loader=None, validation_loader=None, start=0):
         for epoch in tqdm(range(self.max_epoch)):
@@ -38,7 +66,7 @@ class Trainer():
                     self.critic_optimizer.zero_grad()
 
                     critic_losses = self.gan_model.train_critic(batch)
-                    critic_total_loss = critic_losses['C/loss']
+                    critic_total_loss = critic_losses["C/loss"]
                     critic_total_loss.backward(retain_graph=True)
 
                     self.critic_optimizer.step()
@@ -46,7 +74,7 @@ class Trainer():
                 self.generator_optimizer.zero_grad()
 
                 generator_losses = self.gan_model.train_generator(batch)
-                generator_total_loss = generator_losses['G/loss']
+                generator_total_loss = generator_losses["G/loss"]
                 generator_total_loss.backward(retain_graph=True)
                 self.generator_optimizer.step()
 
@@ -72,5 +100,7 @@ class Trainer():
                         generated = torch.cat(generated_list, dim=0).cpu()
                         real = torch.cat(dlls_list, dim=0).cpu()
                         outputs = self.gan_model.validation_step(generated, real)
-                        self.neptune_logger.log_image("Histograms", outputs['histogram'])
-                        self.neptune_logger.log_metric("rocauc", outputs['rocauc'])
+                        self.neptune_logger.log_image(
+                            "Histograms", outputs["histogram"]
+                        )
+                        self.neptune_logger.log_metric("rocauc", outputs["rocauc"])

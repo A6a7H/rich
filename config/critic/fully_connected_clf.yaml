@@ -1,6 +1,5 @@
 critic_architecture: FCN
 critic_model_type: classification
-noise_dim: 64
 
 critic:
   weight_decay: 0.
