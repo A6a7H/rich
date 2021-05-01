@@ -25,4 +25,4 @@ neptune:
   experiment_name: rich
   tags:
     - rich
-    - jsgan
+    - wgan
