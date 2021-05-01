@@ -56,10 +56,19 @@ def main(config: DictConfig):
     )
 
     logger.info("Creating GAN model")
-    model = JSGAN(config)
+    if config['gan_type'] == 'js':
+        model = JSGAN(config)
+    elif config['gan_type'] == 'wgan':
+        model = WGAN(config)
+    elif config['gan_type'] == 'cramergan':
+        pass
+    else:
+        raise NameError("Unknown generator architecture: {}".format(config['gan_type']))
 
     save_path = config["save_path"]
     folder_name = f"{config['gan_type']}_{config['generator_architecture']}_{config['critic_architecture']}_{config['experiment_data']}"
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
     save_path = os.path.join(save_path, folder_name)
 
     logger.info("Creating trainer")
