@@ -19,6 +19,8 @@ features_names:
 checkpoint_path:
 save_path: /content/drive/MyDrive/rich/
 gan_type: wgan
+seed: 42
+experiment_data: 01.05.2021
 
 neptune:
   project_name: danji/rich
