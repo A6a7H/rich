@@ -11,9 +11,7 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostClassifier
 
 from .metrics import calculate_roc_auc
-from models import (get_gradient, 
-                    get_noise, 
-                    gradient_penalty)
+from models import get_noise
 from models import (create_node_model, 
                     create_fcn_model)
 
@@ -121,7 +119,6 @@ class JSGAN():
             dim=1,
         )
 
-        real_full = torch.cat([dlls, x], dim=1)
         generated = torch.cat([self.generator_model(noized_x), x], dim=1)
         crit_fake_pred = self.critic_model(generated)
 
