@@ -9,6 +9,6 @@ critic:
   beta2: 0.999
 
   params:
-    in_channel: 8
+    input_size: 8
     hidden_channel: 32 
     out_channel: 1

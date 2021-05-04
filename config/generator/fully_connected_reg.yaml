@@ -9,6 +9,6 @@ generator:
   beta2: 0.999
 
   params:
-    in_channel: 67
+    input_size: 67
     hidden_channel: 32 
     out_channel: 5

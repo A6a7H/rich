@@ -6,22 +6,22 @@ import typing as tp
 class Fully_connected(nn.Module):
     """
     Simple fully connected neural network
-    :param in_channel: size of input tensor
+    :param input_size: size of input tensor
     :param hidden_channel: hidden tensor
     :param out_channel: size of output tensor
     :return: tensor
     """
 
     def __init__(
-        self, in_channel: int = 1, hidden_channel: int = 64, out_channel: int = 1, **kwargs
+        self, input_size: int = 1, hidden_channel: int = 64, out_channel: int = 1, **kwargs
     ):
         super(Fully_connected, self).__init__()
-        self.in_channel = in_channel
+        self.input_size = input_size
         self.hidden_channel = hidden_channel
         self.out_channel = out_channel
 
         self.crit = nn.Sequential(
-            self._make_crit_block(self.in_channel, self.hidden_channel),
+            self._make_crit_block(self.input_size, self.hidden_channel),
             self._make_crit_block(self.hidden_channel, self.hidden_channel * 2),
             self._make_crit_block(
                 self.hidden_channel * 2, self.out_channel, final_layer=True
@@ -30,7 +30,7 @@ class Fully_connected(nn.Module):
 
     def _make_crit_block(
         self,
-        in_channel: int,
+        input_size: int,
         out_channels: int,
         kernel_size: int = 4,
         stride: int = 2,
@@ -38,12 +38,12 @@ class Fully_connected(nn.Module):
     ):
         if not final_layer:
             return nn.Sequential(
-                nn.Linear(in_channel, out_channels),
+                nn.Linear(input_size, out_channels),
                 nn.LeakyReLU(0.02),
             )
         else:
             return nn.Sequential(
-                nn.Linear(in_channel, out_channels),
+                nn.Linear(input_size, out_channels),
             )
 
     def forward(self, image):
