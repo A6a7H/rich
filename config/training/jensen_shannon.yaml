@@ -1,11 +1,11 @@
 batch_size: 2048
 num_workers: 10
 max_epoch: 1000
-starting_epoch: 0
+starting_epoch: 117
 display_step: 500
-critic_step: 10
+critic_step: 4
 repetitions: 300
-noise_dim: 64
+noise_dim: 32
 device: cuda:0
 
 
@@ -16,11 +16,11 @@ features_names:
   - RichDLLp
   - RichDLLbt
 
-checkpoint_path:
+checkpoint_path: /home/dikrivenkov/rich/experiments/js_NODE_NODE_28.04.2021/epoch_117_iter_0.pt
 save_path: /home/dikrivenkov/rich/experiments/
 gan_type: js
 seed: 42
-experiment_data: 25.04.2021
+experiment_data: 28.04.2021
 
 neptune:
   project_name: danji/rich

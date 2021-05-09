@@ -1,7 +1,7 @@
-generator_architecture: NODE
-generator_model_type: regression
+critic_architecture: NODE
+critic_model_type: regression
 
-generator:
+critic:
   weight_decay: 0.
   optimizer: adam
   learning_rate: 0.001
@@ -9,8 +9,8 @@ generator:
   beta2: 0.999
 
   params:
-    input_size: 19
-    layer_dim: 64
+    input_size: 8
+    layer_dim: 64 
     num_layers: 2
-    tree_dim: 5
+    tree_dim: 1
     depth: 6

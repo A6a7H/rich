@@ -1,5 +1,5 @@
 defaults:
   - generator: node_reg
-  - critic: node_clf
-  - training: jensen_shannon
+  - critic: node_reg
+  - training: wasserstein
   - data: rich_weight

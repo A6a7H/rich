@@ -1,5 +1,5 @@
 critic_architecture: FCN
-critic_model_type: classification
+critic_model_type: regression
 
 critic:
   weight_decay: 0.
@@ -10,5 +10,5 @@ critic:
 
   params:
     input_size: 8
-    hidden_channel: 32 
+    hidden_channel: 32
     out_channel: 1
