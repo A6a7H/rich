@@ -1,5 +1,5 @@
 critic_architecture: NODE
-critic_model_type: regression
+critic_model_type: classification
 
 critic:
   weight_decay: 0.
