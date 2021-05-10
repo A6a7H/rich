@@ -157,7 +157,7 @@ class WGAN:
         epsilon = torch.rand(real_full.size(0), 1, device=self.params["device"], requires_grad=True)
         gradient = get_gradient(self.critic_model, real_full, generated.detach(), epsilon=epsilon)
         gp = gradient_penalty(gradient)
-        critic_loss = torch.mean(crit_fake_pred - crit_real_pred) + self.params['c_lambda'] * gp.detach()
+        critic_loss = torch.mean(crit_fake_pred - crit_real_pred) + self.params['c_lambda'] * gp
 
         critic_result = {
             'C/loss' : critic_loss,
