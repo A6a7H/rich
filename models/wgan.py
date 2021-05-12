@@ -120,7 +120,8 @@ class WGAN:
 
         x = x.to(self.params["device"]).type(torch.float)
         dlls = dlls.to(self.params["device"]).type(torch.float)
-
+        weight = weight.to(self.params["device"]).type(torch.float)
+        
         noized_x = torch.cat(
             [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
             dim=1,
@@ -129,7 +130,7 @@ class WGAN:
         generated = torch.cat([self.generator_model(noized_x), x], dim=1)
         crit_fake_pred = self.critic_model(generated)
 
-        generator_loss = -torch.mean(crit_fake_pred)
+        generator_loss = -torch.mean(crit_fake_pred * weight)
 
         generator_result = {"G/loss": generator_loss}
 
@@ -142,6 +143,7 @@ class WGAN:
             x, dlls, weight = batch
         x = x.to(self.params["device"]).type(torch.float)
         dlls = dlls.to(self.params["device"]).type(torch.float)
+        weight = weight.to(self.params["device"]).type(torch.float)
 
         noized_x = torch.cat(
             [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
@@ -157,7 +159,7 @@ class WGAN:
         epsilon = torch.rand(real_full.size(0), 1, device=self.params["device"], requires_grad=True)
         gradient = get_gradient(self.critic_model, real_full, generated.detach(), epsilon=epsilon)
         gp = gradient_penalty(gradient)
-        critic_loss = torch.mean(crit_fake_pred - crit_real_pred) + self.params['c_lambda'] * gp
+        critic_loss = torch.mean((crit_fake_pred - crit_real_pred) * weight) + self.params['c_lambda'] * gp
 
         critic_result = {
             'C/loss' : critic_loss,

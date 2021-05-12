@@ -113,6 +113,7 @@ class JSGAN():
 
         x = x.to(self.params["device"]).type(torch.float)
         dlls = dlls.to(self.params["device"]).type(torch.float)
+        weight = weight.to(self.params["device"]).type(torch.float)
 
         noized_x = torch.cat(
             [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
@@ -122,7 +123,7 @@ class JSGAN():
         generated = torch.cat([self.generator_model(noized_x), x], dim=1)
         crit_fake_pred = self.critic_model(generated)
 
-        generator_loss = F.binary_cross_entropy_with_logits(crit_fake_pred, torch.ones_like(crit_fake_pred) * 0.9)
+        generator_loss = F.binary_cross_entropy_with_logits(crit_fake_pred, torch.ones_like(crit_fake_pred) * 0.9, weight=weight)
 
         generator_result = {
             'G/loss' : generator_loss
@@ -135,8 +136,10 @@ class JSGAN():
             x, dlls = batch
         else:
             x, dlls, weight = batch
+
         x = x.to(self.params["device"]).type(torch.float)
         dlls = dlls.to(self.params["device"]).type(torch.float)
+        weight = weight.to(self.params["device"]).type(torch.float)
 
         noized_x = torch.cat(
             [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
@@ -149,8 +152,8 @@ class JSGAN():
         crit_fake_pred = self.critic_model(generated.detach())
         crit_real_pred = self.critic_model(real_full)
 
-        fake_loss = F.binary_cross_entropy_with_logits(crit_fake_pred, torch.zeros_like(crit_fake_pred))
-        real_loss = F.binary_cross_entropy_with_logits(crit_real_pred, torch.ones_like(crit_real_pred) * 0.9)
+        fake_loss = F.binary_cross_entropy_with_logits(crit_fake_pred, torch.zeros_like(crit_fake_pred), weight=weight)
+        real_loss = F.binary_cross_entropy_with_logits(crit_real_pred, torch.ones_like(crit_real_pred) * 0.9, weight=weight)
 
         critic_loss = (real_loss + fake_loss) / 2
         critic_result = {

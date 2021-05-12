@@ -15,10 +15,8 @@ def gradient_penalty(gradient):
     Returns:
         penalty: the gradient penalty
     """
-    epsilon = 1e-8
     gradient = gradient.view(len(gradient), -1)
-    # gradient_norm = gradient.norm(2, dim=1) nan when 
-    gradient_norm = torch.sqrt(epsilon + torch.sum(gradient.view(gradient.size(0), -1)**2, dim=1))
+    gradient_norm = gradient.norm(2, dim=1)
     penalty = torch.mean((gradient_norm - 1) ** 2)
     return penalty
 
