@@ -5,6 +5,7 @@ starting_epoch: 0
 display_step: 100
 critic_step: 10
 repetitions: 300
+freeze_generator: true
 c_lambda: 10
 noise_dim: 16
 device: cuda

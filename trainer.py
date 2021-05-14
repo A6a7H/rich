@@ -21,6 +21,7 @@ class Trainer:
         critic_step: int = 8,
         device: str = "cuda",
         save_path: str = ".",
+        freeze_generator: bool = False
         neptune_logger: Callable = None,
     ):
         self.gan_model = gan_model
@@ -29,6 +30,7 @@ class Trainer:
         self.critic_step = critic_step
         self.device = device
         self.save_path = save_path
+        self.freeze_generator = freeze_generator
         self.neptune_logger = neptune_logger
         (
             self.generator_optimizer,
@@ -72,14 +74,15 @@ class Trainer:
                     self.critic_optimizer.step()
 
                 self.generator_optimizer.zero_grad()
+                
+                if not self.freeze_generator:
+                    generator_losses = self.gan_model.train_generator(batch)
+                    generator_total_loss = generator_losses["G/loss"]
+                    generator_total_loss.backward(retain_graph=True)
+                    self.generator_optimizer.step()
 
-                generator_losses = self.gan_model.train_generator(batch)
-                generator_total_loss = generator_losses["G/loss"]
-                generator_total_loss.backward(retain_graph=True)
-                self.generator_optimizer.step()
-
-                for key, value in generator_losses.items():
-                    self.neptune_logger.log_metric(key, value.item())
+                    for key, value in generator_losses.items():
+                        self.neptune_logger.log_metric(key, value.item())
 
                 for key, value in critic_losses.items():
                     self.neptune_logger.log_metric(key, value.item())

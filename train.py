@@ -79,6 +79,7 @@ def main(config: DictConfig):
         critic_step=config["critic_step"],
         device=config["device"],
         save_path=save_path,
+        freeze_generator=config["freeze_generator"],
         neptune_logger=neptune_logger,
     )
     logger.info("Calculating inference time")
