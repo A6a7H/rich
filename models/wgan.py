@@ -169,15 +169,7 @@ class WGAN:
         return critic_result
 
     @torch.no_grad()
-    def generate(self, batch):
-        if self.params['data']['drop_weights']:
-            x, dlls = batch
-        else:
-            x, dlls, weight = batch
-            
-        x = x.to(self.params["device"]).type(torch.float)
-        dlls = dlls.to(self.params["device"]).type(torch.float)
-
+    def generate(self, x):
         noize = get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])
         noized_x = torch.cat(
             [x, noize],
@@ -226,9 +218,36 @@ class WGAN:
 
         return fig
 
+    @torch.no_grad()
+    def evaluate(self, validation_loader):
+        generated_list = []
+        dlls_list = []
+        weight_list = []
+        for batch in validation_loader:
+            if self.params['data']['drop_weights']:
+                x, dlls = batch
+                weight = torch.zeros((dlls.size(0), 1))
+            else:
+                x, dlls, weight = batch
+            x = x.to(self.params["device"]).type(torch.float)
+
+            generated = self.gan_model.generate(x)
+            generated_list.append(generated)
+            dlls_list.append(dlls)
+            weight_list.append(weight)
+        generated = torch.cat(generated_list, dim=0).cpu()
+        real = torch.cat(dlls_list, dim=0).cpu()
+        weights = torch.cat(weight_list, dim=0).cpu()
+        logger.info(f"generated shape: {generated.sahpe}")
+        logger.info(f"real shape: {real.sahpe}")
+        logger.info(f"weights shape: {weights.sahpe}")
+        outputs = self.validation_step(generated, real, weights)
+        return outputs
+
+
     def validation_step(self, generated, real, weights=None):
         figure = self.get_histograms(generated, real)
-        roc_auc_score = self.get_roc_auc_score(generated, real)
+        roc_auc_score = self.get_roc_auc_score(generated, real, weights)
         outputs = {
             'histogram': figure,
             'rocauc': roc_auc_score
@@ -236,7 +255,7 @@ class WGAN:
         return outputs
 
 
-    def get_roc_auc_score(self, generated, real):
+    def get_roc_auc_score(self, generated, real, weights=None):
         X = np.concatenate((generated, real))
         y = np.array([0] * generated.shape[0] + [1] * real.shape[0])
 
@@ -257,5 +276,5 @@ class WGAN:
         classifier = CatBoostClassifier(iterations=1000, thread_count=10, silent=True)
         classifier.fit(X_train, y_train)
         predicted = classifier.predict(X_test)
-        roc_auc = calculate_roc_auc(y_test, predicted)
+        roc_auc = calculate_roc_auc(y_test, predicted, weights)
         return roc_auc

@@ -21,7 +21,7 @@ class Trainer:
         critic_step: int = 8,
         device: str = "cuda",
         save_path: str = ".",
-        freeze_generator: bool = False
+        freeze_generator: bool = False,
         neptune_logger: Callable = None,
     ):
         self.gan_model = gan_model
@@ -93,17 +93,8 @@ class Trainer:
                         os.mkdir(self.save_path)
                     save_path_with_iter = os.path.join(self.save_path, name)
                     self.gan_model.save_models(save_path_with_iter, epoch)
-                    with torch.no_grad():
-                        generated_list = []
-                        dlls_list = []
-                        for batch in validation_loader:
-                            generated = self.gan_model.generate(batch)
-                            generated_list.append(generated)
-                            dlls_list.append(batch[1])
-                        generated = torch.cat(generated_list, dim=0).cpu()
-                        real = torch.cat(dlls_list, dim=0).cpu()
-                        outputs = self.gan_model.validation_step(generated, real)
-                        self.neptune_logger.log_image(
-                            "Histograms", outputs["histogram"]
-                        )
-                        self.neptune_logger.log_metric("rocauc", outputs["rocauc"])
+                    outputs = self.gan_model.evaluate(validation_loader)
+                    self.neptune_logger.log_image(
+                        "Histograms", outputs["histogram"]
+                    )
+                    self.neptune_logger.log_metric("rocauc", outputs["rocauc"])
