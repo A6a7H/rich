@@ -228,7 +228,7 @@ class WGAN:
 
     def validation_step(self, generated, real, weights=None):
         figure = self.get_histograms(generated, real)
-        roc_auc_score = self.get_roc_auc_score(generated, real)
+        roc_auc_score = self.get_roc_auc_score(generated, real, weights)
         outputs = {
             'histogram': figure,
             'rocauc': roc_auc_score
@@ -236,7 +236,7 @@ class WGAN:
         return outputs
 
 
-    def get_roc_auc_score(self, generated, real):
+    def get_roc_auc_score(self, generated, real, weights=None):
         X = np.concatenate((generated, real))
         y = np.array([0] * generated.shape[0] + [1] * real.shape[0])
 
@@ -257,5 +257,5 @@ class WGAN:
         classifier = CatBoostClassifier(iterations=1000, thread_count=10, silent=True)
         classifier.fit(X_train, y_train)
         predicted = classifier.predict(X_test)
-        roc_auc = calculate_roc_auc(y_test, predicted)
+        roc_auc = calculate_roc_auc(y_test, predicted, weights=weights)
         return roc_auc

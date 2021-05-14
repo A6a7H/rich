@@ -21,7 +21,7 @@ class Trainer:
         critic_step: int = 8,
         device: str = "cuda",
         save_path: str = ".",
-        freeze_generator: bool = False
+        freeze_generator: bool = False,
         neptune_logger: Callable = None,
     ):
         self.gan_model = gan_model
@@ -96,13 +96,20 @@ class Trainer:
                     with torch.no_grad():
                         generated_list = []
                         dlls_list = []
+                        weights_list = []
                         for batch in validation_loader:
                             generated = self.gan_model.generate(batch)
                             generated_list.append(generated)
                             dlls_list.append(batch[1])
+                            if len(batch) > 2:
+                                weights_list.append(batch[2])
                         generated = torch.cat(generated_list, dim=0).cpu()
                         real = torch.cat(dlls_list, dim=0).cpu()
-                        outputs = self.gan_model.validation_step(generated, real)
+                        if len(batch) > 2:
+                            weights = torch.cat(weights_list, dim=0).cpu()
+                            outputs = self.gan_model.validation_step(generated, real, weights)
+                        else:
+                            outputs = self.gan_model.validation_step(generated, real)
                         self.neptune_logger.log_image(
                             "Histograms", outputs["histogram"]
                         )
