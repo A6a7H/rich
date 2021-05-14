@@ -231,16 +231,16 @@ class WGAN:
                 x, dlls, weight = batch
             x = x.to(self.params["device"]).type(torch.float)
 
-            generated = self.gan_model.generate(x)
+            generated = self.generate(x)
             generated_list.append(generated)
             dlls_list.append(dlls)
             weight_list.append(weight)
         generated = torch.cat(generated_list, dim=0).cpu()
         real = torch.cat(dlls_list, dim=0).cpu()
         weights = torch.cat(weight_list, dim=0).cpu()
-        logger.info(f"generated shape: {generated.sahpe}")
-        logger.info(f"real shape: {real.sahpe}")
-        logger.info(f"weights shape: {weights.sahpe}")
+        logger.info(f"generated shape: {generated.shape}")
+        logger.info(f"real shape: {real.shape}")
+        logger.info(f"weights shape: {weights.shape}")
         outputs = self.validation_step(generated, real, weights)
         return outputs
 
@@ -258,15 +258,19 @@ class WGAN:
     def get_roc_auc_score(self, generated, real, weights=None):
         X = np.concatenate((generated, real))
         y = np.array([0] * generated.shape[0] + [1] * real.shape[0])
+        weights = np.concatenate((weights, weights))
 
         (
             X_train,
             X_test,
             y_train,
             y_test,
+            w_train,
+            w_test
         ) = train_test_split(
             X,
             y,
+            weights,
             test_size=0.2,
             random_state=self.params["seed"],
             stratify=y,
@@ -276,5 +280,5 @@ class WGAN:
         classifier = CatBoostClassifier(iterations=1000, thread_count=10, silent=True)
         classifier.fit(X_train, y_train)
         predicted = classifier.predict(X_test)
-        roc_auc = calculate_roc_auc(y_test, predicted, weights)
+        roc_auc = calculate_roc_auc(y_test, predicted, w_test)
         return roc_auc

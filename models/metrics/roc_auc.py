@@ -14,10 +14,10 @@ def calculate_roc_auc(
     if weights is None:
         weights = np.ones_like(predictions)
 
-    logger.info(f"classes shape: {classes.sahpe}")
-    logger.info(f"predictions shape: {predictions.sahpe}")
-    logger.info(f"weights shape: {weights.sahpe}")
-    logger.info(f"true weights shape: {np.ones_like(predictions).sahpe}")
+    logger.info(f"classes shape: {classes.shape}")
+    logger.info(f"predictions shape: {predictions.shape}")
+    logger.info(f"weights shape: {weights.shape}")
+    logger.info(f"true weights shape: {np.ones_like(predictions).shape}")
 
     assert len(classes) == len(predictions) == len(weights)
     assert classes.ndim == predictions.ndim == weights.ndim == 1
