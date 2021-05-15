@@ -238,9 +238,6 @@ class WGAN:
         generated = torch.cat(generated_list, dim=0).cpu()
         real = torch.cat(dlls_list, dim=0).cpu()
         weights = torch.cat(weight_list, dim=0).cpu()
-        logger.info(f"generated shape: {generated.shape}")
-        logger.info(f"real shape: {real.shape}")
-        logger.info(f"weights shape: {weights.shape}")
         outputs = self.validation_step(generated, real, weights)
         return outputs
 
