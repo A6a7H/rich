@@ -5,9 +5,9 @@ generator:
   weight_decay: 0.
   optimizer: qhadam
 
-params:
-  input_size: 67
-  layer_dim: 64
-  num_layers: 3
-  tree_dim: 5
-  depth: 6
+  params:
+    input_size: 67
+    layer_dim: 64
+    num_layers: 4
+    tree_dim: 5
+    depth: 6

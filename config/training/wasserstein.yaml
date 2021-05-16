@@ -1,11 +1,11 @@
-batch_size: 2048
+batch_size: 1024
 num_workers: 10
 max_epoch: 1000
 starting_epoch: 0
-display_step: 100
+display_step: 800
 critic_step: 10
 repetitions: 300
-freeze_generator: true
+freeze_generator: false
 c_lambda: 10
 noise_dim: 64
 device: cuda

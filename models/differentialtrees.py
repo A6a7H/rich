@@ -41,7 +41,7 @@ class ClassificationDifferentialTree(nn.Module):
                 depth=depth,
                 flatten_output=False,
                 choice_function=lib.entmax15,
-                bin_function=lib.entmax15,
+                bin_function=lib.,
             ),
             lib.Lambda(lambda x: x[..., :tree_dim].mean(dim=-2)),
         )

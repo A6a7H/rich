@@ -1,7 +1,7 @@
-critic_architecture: NODE
-critic_model_type: classification
+generator_architecture: NODE
+generator_model_type: classification
 
-critic:
+generator:
   weight_decay: 0.
   optimizer: adam
   learning_rate: 0.001
@@ -9,8 +9,8 @@ critic:
   beta2: 0.999
 
   params:
-    input_size: 8
+    input_size: 67
     layer_dim: 64
     num_layers: 4
-    tree_dim: 1
+    tree_dim: 5
     depth: 6

@@ -52,7 +52,7 @@ class WGAN:
                 betas=(self.params["critic"]["beta1"], self.params["critic"]["beta2"])
             )
         elif self.params["critic"]["optimizer"] == "qhadam":
-            generator_optimizer = QHAdam(
+            critic_optimizer = QHAdam(
                 self.generator_model.parameters(),
                 nus=(0.7, 1.0), 
                 betas=(0.95, 0.998)
