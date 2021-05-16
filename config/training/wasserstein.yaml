@@ -1,4 +1,4 @@
-batch_size: 64
+batch_size: 2048
 num_workers: 10
 max_epoch: 1000
 starting_epoch: 0
@@ -7,7 +7,7 @@ critic_step: 10
 repetitions: 300
 freeze_generator: true
 c_lambda: 10
-noise_dim: 16
+noise_dim: 64
 device: cuda
 
 features_names:
@@ -18,10 +18,10 @@ features_names:
   - RichDLLbt
 
 checkpoint_path:
-save_path: /home/dikrivenkov/rich/experiments/
+save_path: /content/drive/MyDrive/rich/
 gan_type: wgan
 seed: 42
-experiment_data: 05.05.2021
+experiment_data: 16.05.2021
 
 neptune:
   project_name: danji/rich

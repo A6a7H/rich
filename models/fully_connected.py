@@ -22,9 +22,9 @@ class Fully_connected(nn.Module):
 
         self.crit = nn.Sequential(
             self._make_crit_block(self.input_size, self.hidden_channel),
-            self._make_crit_block(self.hidden_channel, self.hidden_channel * 2),
+            self._make_crit_block(self.hidden_channel, self.hidden_channel // 2),
             self._make_crit_block(
-                self.hidden_channel * 2, self.out_channel, final_layer=True
+                self.hidden_channel // 2, self.out_channel, final_layer=True
             ),
         )
 

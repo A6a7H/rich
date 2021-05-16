@@ -41,13 +41,13 @@ class ClassificationDifferentialTree(nn.Module):
                 depth=depth,
                 flatten_output=False,
                 choice_function=lib.entmax15,
-                bin_function=lib.sparsemax,
+                bin_function=lib.entmax15,
             ),
-            lib.Lambda(lambda x: x[..., tree_dim].mean(dim=-2)),
+            lib.Lambda(lambda x: x[..., :tree_dim].mean(dim=-2)),
         )
 
     def forward(self, x, noise=None):
-        return self.layers(x).unsqueeze(1)
+        return self.layers(x)
 
 
 class RegressionDifferentialTree(nn.Module):

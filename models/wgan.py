@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from torchvision.utils import make_grid
 from sklearn.model_selection import train_test_split
 from catboost import CatBoostClassifier
+from qhoptim.pyt import QHAdam
 
 from .metrics import calculate_roc_auc
 from models import (get_gradient, 
@@ -34,6 +35,12 @@ class WGAN:
                 weight_decay=self.params['generator']['weight_decay'],
                 betas=(self.params["generator"]["beta1"], self.params["generator"]["beta2"])
             )
+        elif self.params["generator"]["optimizer"] == "qhadam":
+            generator_optimizer = QHAdam(
+                self.generator_model.parameters(),
+                nus=(0.7, 1.0), 
+                betas=(0.95, 0.998)
+            )
         else:
             raise NameError("Unknown optimizer name")
 
@@ -43,6 +50,12 @@ class WGAN:
                 lr=self.params['critic']['learning_rate'],
                 weight_decay=self.params['critic']['weight_decay'],
                 betas=(self.params["critic"]["beta1"], self.params["critic"]["beta2"])
+            )
+        elif self.params["critic"]["optimizer"] == "qhadam":
+            generator_optimizer = QHAdam(
+                self.generator_model.parameters(),
+                nus=(0.7, 1.0), 
+                betas=(0.95, 0.998)
             )
         else:
             raise NameError("Unknown optimizer name")
