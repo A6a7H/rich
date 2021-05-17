@@ -18,10 +18,10 @@ features_names:
   - RichDLLbt
 
 checkpoint_path:
-save_path: /content/drive/MyDrive/rich/
+save_path: /home/dikrivenkov/rich/experiments/
 gan_type: wgan
 seed: 42
-experiment_data: 16.05.2021
+experiment_data: 17.05.2021
 
 neptune:
   project_name: danji/rich
