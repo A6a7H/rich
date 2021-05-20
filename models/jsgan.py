@@ -6,11 +6,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 
-from torchvision.utils import make_grid
 from sklearn.model_selection import train_test_split
 from catboost import CatBoostClassifier
+from qhoptim.pyt import QHAdam
 
-from .metrics import calculate_roc_auc
+from metrics import calculate_roc_auc
 from models import get_noise
 from models import (create_node_model, 
                     create_fcn_model)
@@ -31,6 +31,12 @@ class JSGAN():
                 weight_decay=self.params['generator']['weight_decay'],
                 betas=(self.params["generator"]["beta1"], self.params["generator"]["beta2"])
             )
+        elif self.params["generator"]["optimizer"] == "qhadam":
+            generator_optimizer = QHAdam(
+                self.generator_model.parameters(),
+                nus=(0.7, 1.0), 
+                betas=(0.95, 0.998)
+            )
         else:
             raise NameError("Unknown optimizer name")
         
@@ -40,6 +46,12 @@ class JSGAN():
                 lr=self.params['critic']['learning_rate'],
                 weight_decay=self.params['critic']['weight_decay'],
                 betas=(self.params["critic"]["beta1"], self.params["critic"]["beta2"])
+            )
+        elif self.params["critic"]["optimizer"] == "qhadam":
+            critic_optimizer = QHAdam(
+                self.critic_model.parameters(),
+                nus=(0.7, 1.0), 
+                betas=(0.95, 0.998)
             )
         else:
             raise NameError("Unknown optimizer name")
@@ -165,15 +177,7 @@ class JSGAN():
         return critic_result
 
     @torch.no_grad()
-    def generate(self, batch):
-        if self.params['data']['drop_weights']:
-            x, dlls = batch
-        else:
-            x, dlls, weight = batch
-            
-        x = x.to(self.params["device"]).type(torch.float)
-        dlls = dlls.to(self.params["device"]).type(torch.float)
-
+    def generate(self, x):
         noize = get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])
         noized_x = torch.cat(
             [x, noize],
@@ -223,6 +227,29 @@ class JSGAN():
 
         return fig
 
+    @torch.no_grad()
+    def evaluate(self, validation_loader):
+        generated_list = []
+        dlls_list = []
+        weight_list = []
+        for batch in validation_loader:
+            if self.params['data']['drop_weights']:
+                x, dlls = batch
+                weight = torch.zeros((dlls.size(0), 1))
+            else:
+                x, dlls, weight = batch
+            x = x.to(self.params["device"]).type(torch.float)
+
+            generated = self.generate(x)
+            generated_list.append(generated)
+            dlls_list.append(dlls)
+            weight_list.append(weight)
+        generated = torch.cat(generated_list, dim=0).cpu()
+        real = torch.cat(dlls_list, dim=0).cpu()
+        weights = torch.cat(weight_list, dim=0).cpu()
+        outputs = self.validation_step(generated, real, weights)
+        return outputs
+
     def validation_step(self, generated, real, weights=None):
         figure = self.get_histograms(generated, real)
         roc_auc_score = self.get_roc_auc_score(generated, real, weights)
@@ -236,15 +263,19 @@ class JSGAN():
     def get_roc_auc_score(self, generated, real, weights=None):
         X = np.concatenate((generated, real))
         y = np.array([0] * generated.shape[0] + [1] * real.shape[0])
+        weights = np.concatenate((weights, weights))
 
         (
             X_train,
             X_test,
             y_train,
             y_test,
+            w_train,
+            w_test
         ) = train_test_split(
             X,
             y,
+            weights,
             test_size=0.2,
             random_state=self.params["seed"],
             stratify=y,
@@ -254,5 +285,5 @@ class JSGAN():
         classifier = CatBoostClassifier(iterations=1000, thread_count=10, silent=True)
         classifier.fit(X_train, y_train)
         predicted = classifier.predict(X_test)
-        roc_auc = calculate_roc_auc(y_test, predicted, weights)
+        roc_auc = calculate_roc_auc(y_test, predicted, w_test)
         return roc_auc

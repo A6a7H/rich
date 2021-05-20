@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostClassifier
 from qhoptim.pyt import QHAdam
 
-from .metrics import calculate_roc_auc
+from metrics import calculate_roc_auc
 from models import (get_gradient, 
                     get_noise, 
                     gradient_penalty)
@@ -53,7 +53,7 @@ class WGAN:
             )
         elif self.params["critic"]["optimizer"] == "qhadam":
             critic_optimizer = QHAdam(
-                self.generator_model.parameters(),
+                self.critic_model.parameters(),
                 nus=(0.7, 1.0), 
                 betas=(0.95, 0.998)
             )
