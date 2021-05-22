@@ -1,5 +1,5 @@
 defaults:
   - generator: node_clf
   - critic: node_clf
-  - training: wasserstein
+  - training: cramer
   - data: rich_weight

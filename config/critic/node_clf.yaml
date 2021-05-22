@@ -12,5 +12,5 @@ critic:
     input_size: 8
     layer_dim: 64
     num_layers: 4
-    tree_dim: 1
+    tree_dim: 64
     depth: 6
