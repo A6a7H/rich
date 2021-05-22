@@ -21,7 +21,7 @@ from models import (create_node_model,
 logger = logging.getLogger(__name__)
 
 
-class WGAN:
+class CramerGAN:
     def __init__(self, config: tp.Dict[str, tp.Any]):
         self.params = config
         self.create_generator()
@@ -68,6 +68,10 @@ class WGAN:
             'generator_model_state_dict': self.generator_model.state_dict(),
             'critic_model_state_dict': self.critic_model.state_dict(),
             }, path)
+
+    def cramer_critic(self, left, right):
+        discriminated_left = self.critic_model(left)
+        return torch.norm(discriminated_left - self.critic_model(right), dim=1) - torch.norm(discriminated_left, dim=1)
 
     def load_models(self, path):
         checkpoint = torch.load(path)
@@ -135,15 +139,22 @@ class WGAN:
         dlls = dlls.to(self.params["device"]).type(torch.float)
         weight = weight.to(self.params["device"]).type(torch.float)
         
-        noized_x = torch.cat(
+        noized_x_first = torch.cat(
             [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
             dim=1,
         )
 
-        generated = torch.cat([self.generator_model(noized_x), x], dim=1)
-        crit_fake_pred = self.critic_model(generated)
+        noized_x_second = torch.cat(
+            [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
+            dim=1,
+        )
 
-        generator_loss = -torch.mean(crit_fake_pred * weight)
+        real_full = torch.cat([dlls, x], dim=1)
+        generated_first = torch.cat([self.generator_model(noized_x_first), x], dim=1)
+        generated_second = torch.cat([self.generator_model(noized_x_second), x], dim=1)
+
+        generator_loss = torch.mean(self.cramer_critic(real_full, generated_second) * weight - 
+                                    self.cramer_critic(generated_first, generated_second) * weight)
 
         generator_result = {"G/loss": generator_loss}
 
@@ -158,21 +169,29 @@ class WGAN:
         dlls = dlls.to(self.params["device"]).type(torch.float)
         weight = weight.to(self.params["device"]).type(torch.float)
 
-        noized_x = torch.cat(
+        noized_x_first = torch.cat(
+            [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
+            dim=1,
+        )
+
+        noized_x_second = torch.cat(
             [x, get_noise(x.shape[0], self.params['noise_dim']).to(self.params["device"])],
             dim=1,
         )
 
         real_full = torch.cat([dlls, x], dim=1)
-        generated = torch.cat([self.generator_model(noized_x), x], dim=1)
-
-        crit_fake_pred = self.critic_model(generated.detach())
-        crit_real_pred = self.critic_model(real_full)
+        generated_first = torch.cat([self.generator_model(noized_x_first), x], dim=1)
+        generated_second = torch.cat([self.generator_model(noized_x_second), x], dim=1)
+        
+        critic_loss = torch.mean(self.cramer_critic(real_full, generated_second) * weight - 
+                                    self.cramer_critic(generated_first, generated_second) * weight)
 
         epsilon = torch.rand(real_full.size(0), 1, device=self.params["device"], requires_grad=True)
-        gradient = get_gradient(self.critic_model, real_full, generated.detach(), epsilon=epsilon)
+        gradient = get_gradient(self.critic_model, real_full, generated_first.detach(), 
+                                generated_second.detach(), epsilon=epsilon)
         gp = gradient_penalty(gradient)
-        critic_loss = torch.mean((crit_fake_pred - crit_real_pred) * weight) + self.params['c_lambda'] * gp
+
+        critic_loss = self.params['c_lambda'] * gp - critic_loss
 
         critic_result = {
             'C/loss' : critic_loss,

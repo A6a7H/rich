@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostClassifier
 from qhoptim.pyt import QHAdam
 
-from metrics import calculate_roc_auc
+from .metrics import calculate_roc_auc
 from models import get_noise
 from models import (create_node_model, 
                     create_fcn_model)
