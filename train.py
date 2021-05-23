@@ -7,7 +7,7 @@ import neptune
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
 
-from models import WGAN, JSGAN
+from models import WGAN, JSGAN, CramerGAN
 from trainer import Trainer
 from utils import get_RICH
 
@@ -61,7 +61,7 @@ def main(config: DictConfig):
     elif config['gan_type'] == 'wgan':
         model = WGAN(config)
     elif config['gan_type'] == 'cramergan':
-        pass
+        model = CramerGAN(config)
     else:
         raise NameError("Unknown generator architecture: {}".format(config['gan_type']))
 

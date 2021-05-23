@@ -19,7 +19,7 @@ features_names:
 
 checkpoint_path:
 save_path: /home/dikrivenkov/rich/experiments/
-gan_type: wgan
+gan_type: cramer
 seed: 42
 experiment_data: 17.05.2021
 
