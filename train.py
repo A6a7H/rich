@@ -20,7 +20,7 @@ def main(config: DictConfig):
     logger.info("Setting up logger")
     project = neptune.init(
         project_qualified_name=config["neptune"]["project_name"],
-        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJodHRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5IjoiNzFhNGI0YTYtNzM1OS00MDRkLWFiZWUtZmNkZjNiZjMzOTAxIn0=",
+        api_token="",
     )
 
     logger.info("Setting up experiment")
@@ -60,7 +60,7 @@ def main(config: DictConfig):
         model = JSGAN(config)
     elif config['gan_type'] == 'wgan':
         model = WGAN(config)
-    elif config['gan_type'] == 'cramergan':
+    elif config['gan_type'] == 'cramer':
         model = CramerGAN(config)
     else:
         raise NameError("Unknown generator architecture: {}".format(config['gan_type']))
