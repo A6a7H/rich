@@ -21,7 +21,7 @@ checkpoint_path:
 save_path: /home/dikrivenkov/rich/experiments/
 gan_type: cramer
 seed: 42
-experiment_data: 17.05.2021
+experiment_data: 23.05.2021
 
 neptune:
   project_name: danji/rich
